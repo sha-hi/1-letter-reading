@@ -1,485 +1,611 @@
 <!DOCTYPE html>
 <html lang="ml" dir="ltr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Letter Reading Game</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Letter / Word Reading Game</title>
   <link href="https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;700&family=Noto+Sans+Malayalam:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root{
+      --brand:#667eea; --brand-2:#5568d3; --page:#ffffff; --text:#1f2937; --muted:#6b7280;
+      --card:#f8f9fa; --good:#22c55e; --warn:#f59e0b; --bad:#ef4444; --shadow:rgba(0,0,0,.16)
     }
-    body {
-      font-family: 'Noto Sans Malayalam', 'Arial', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      padding: 20px;
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family:'Noto Sans Malayalam', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      display:flex; align-items:center; justify-content:center;
+      background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding:12px
     }
-    .page {
-      display: none;
-      background: white;
-      padding: 40px;
-      border-radius: 20px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-      max-width: 600px;
-      width: 100%;
-      animation: fadeIn 0.5s;
+    .shell{
+      width:100%; max-width:560px; margin:auto
     }
-    .page.active {
-      display: block;
+    .page{
+      display:none; background:var(--page); color:var(--text);
+      border-radius:18px; padding:22px; box-shadow:0 12px 42px var(--shadow);
+      animation:fade .35s ease
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+    .page.active{display:block}
+    @keyframes fade{from{opacity:0; transform:translateY(14px)} to{opacity:1; transform:translateY(0)}}
+    h1{font-size:22px; text-align:center; color:var(--brand); margin-bottom:16px}
+    .stack{display:grid; gap:14px}
+    .row{display:flex; gap:10px; flex-wrap:wrap}
+    label{font-size:16px; color:#374151}
+    .input,.select{
+      width:100%; padding:14px 12px; border-radius:12px; border:2px solid #e5e7eb;
+      font-size:16px; background:#fff; outline:none; transition:border-color .2s
     }
-    h1 {
-      text-align: center;
-      color: #667eea;
-      margin-bottom: 30px;
-      font-size: 32px;
+    .input:focus,.select:focus{border-color:var(--brand)}
+    .btn{
+      width:100%; padding:14px 16px; border:0; border-radius:12px; font-weight:700;
+      font-size:17px; cursor:pointer; background:var(--brand); color:#fff;
+      transition:transform .12s, box-shadow .12s, background .12s
     }
-    .input-group {
-      margin: 30px 0;
+    .btn:hover:not(:disabled){background:var(--brand-2); transform:translateY(-2px); box-shadow:0 8px 18px rgba(102,126,234,.35)}
+    .btn:disabled{opacity:.5; cursor:not-allowed}
+    .btn.secondary{background:#6c757d}
+    .btn.ghost{background:#eef2ff; color:#1e3a8a}
+    .btn.outline{background:#fff; color:var(--brand); border:2px solid var(--brand)}
+    .muted{color:var(--muted); font-size:14px}
+    .card{background:var(--card); border-radius:14px; padding:14px}
+    .kpi{display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-bottom:12px}
+    .chip{background:#eef2ff; color:#1e3a8a; padding:6px 10px; border-radius:999px; font-weight:700; font-size:14px}
+    .letter{
+      font-family:'Scheherazade New', serif; font-weight:700;
+      font-size:120px; text-align:center; margin:10px 0; transition:transform .15s
     }
-    label {
-      display: block;
-      font-size: 20px;
-      margin-bottom: 10px;
-      color: #333;
+    .letter.red{color:#dc2626} .letter.blue{color:#2563eb}
+    .scorebar{display:flex; justify-content:center; gap:8px; flex-wrap:wrap; font-size:16px}
+    .leaderboard-item{
+      display:flex; justify-content:space-between; align-items:center;
+      padding:12px; margin:8px 0; background:#fff; border-radius:12px; font-size:16px; border:1px solid #eef2f7
     }
-    input[type="text"] {
-      width: 100%;
-      padding: 15px;
-      font-size: 18px;
-      border: 2px solid #ddd;
-      border-radius: 10px;
-      font-family: 'Noto Sans Malayalam', 'Arial', sans-serif;
-      transition: border-color 0.3s;
+    .leaderboard-item.first{background:linear-gradient(135deg,#ffd700 0%,#ffed4e 100%); font-weight:700}
+    .leaderboard-item.second{background:linear-gradient(135deg,#c0c0c0 0%,#e8e8e8 100%)}
+    .leaderboard-item.third{background:linear-gradient(135deg,#cd7f32 0%,#e8a87c 100%)}
+    .rank{font-size:22px; font-weight:800; margin-right:10px}
+    .congrats{
+      background:linear-gradient(135deg,#22c55e 0%,#86efac 100%); color:#064e3b;
+      padding:16px; border-radius:14px; text-align:center; font-size:18px; font-weight:800; animation:pulse 1s infinite
     }
-    input[type="text"]:focus {
-      outline: none;
-      border-color: #667eea;
-    }
-    button {
-      width: 100%;
-      padding: 15px 24px;
-      font-size: 20px;
-      margin: 10px 0;
-      cursor: pointer;
-      border: none;
-      background: #667eea;
-      color: white;
-      border-radius: 10px;
-      transition: all 0.3s;
-      font-family: 'Noto Sans Malayalam', 'Arial', sans-serif;
-      font-weight: bold;
-    }
-    button:hover:not(:disabled) {
-      background: #5568d3;
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-    }
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    button.secondary {
-      background: #6c757d;
-    }
-    button.secondary:hover:not(:disabled) {
-      background: #5a6268;
-    }
-    .leaderboard {
-      margin: 20px 0;
-    }
-    .leaderboard-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 15px;
-      margin: 10px 0;
-      background: #f8f9fa;
-      border-radius: 10px;
-      font-size: 18px;
-    }
-    .leaderboard-item.first {
-      background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-      font-weight: bold;
-    }
-    .leaderboard-item.second {
-      background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
-    }
-    .leaderboard-item.third {
-      background: linear-gradient(135deg, #cd7f32 0%, #e8a87c 100%);
-    }
-    .rank {
-      font-size: 24px;
-      font-weight: bold;
-      margin-right: 15px;
-    }
-    .letter {
-      font-size: 120px;
-      margin: 20px;
-      font-weight: bold;
-      text-align: center;
-      font-family: 'Scheherazade New', serif;
-      transition: all 0.3s ease;
-    }
-    .red { color: #dc2626; }
-    .blue { color: #2563eb; }
-    .scoreboard {
-      font-size: 24px;
-      margin-bottom: 30px;
-      padding: 15px 30px;
-      background: #f8f9fa;
-      border-radius: 10px;
-      text-align: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    .controls {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-top: 20px;
-    }
-    .controls button {
-      flex: 1;
-      min-width: 120px;
-    }
-    .congratulations {
-      background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-      padding: 20px;
-      border-radius: 15px;
-      text-align: center;
-      margin: 20px 0;
-      font-size: 24px;
-      font-weight: bold;
-      color: #333;
-      animation: pulse 1s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
-    .your-score {
-      text-align: center;
-      font-size: 28px;
-      margin: 20px 0;
-      color: #667eea;
-      font-weight: bold;
-    }
-    .empty-leaderboard {
-      text-align: center;
-      color: #6c757d;
-      font-size: 18px;
-      padding: 30px;
-    }
-    @media (max-width: 600px) {
-      .page {
-        padding: 20px;
-      }
-      h1 {
-        font-size: 24px;
-      }
-      .letter {
-        font-size: 80px;
-      }
-      button {
-        font-size: 16px;
-        padding: 12px 20px;
-      }
-      .scoreboard {
-        font-size: 18px;
-      }
+    @keyframes pulse{0%,100%{transform:scale(1)} 50%{transform:scale(1.03)}}
+    .empty{color:var(--muted); text-align:center; padding:18px}
+    .controls{display:flex; gap:10px; flex-wrap:wrap; justify-content:center}
+    .controls .btn{flex:1; min-width:120px}
+    .subtle{font-size:13px; color:#475569}
+    .two-col{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+    @media (max-width:480px){
+      .page{padding:18px}
+      h1{font-size:20px}
+      .letter{font-size:92px}
+      .btn{font-size:16px; padding:12px 14px}
     }
   </style>
 </head>
 <body>
+  <div class="shell">
 
-  <!-- Page 1: Name Entry -->
-  <div id="page1" class="page active">
-    <h1>Letter Reading Game</h1>
-    <div class="input-group">
-      <label for="playerName">നിങ്ങളുടെ പേര് നൽകുക:</label>
-      <input type="text" id="playerName" placeholder="പേര് ടൈപ്പ് ചെയ്യുക..." oninput="checkName()">
-    </div>
-    <button id="nameNextBtn" onclick="goToLeaderboard()" disabled>അടുത്തത്</button>
-  </div>
+    <!-- Page 1: Onboarding -->
+    <section id="page1" class="page active">
+      <h1>Fast Reading Capability Building</h1>
+      <div class="stack">
+        <div>
+          <label for="playerName" class="subtle">നിങ്ങളുടെ പേര്</label>
+          <input id="playerName" class="input" type="text" placeholder="പേര് ടൈപ്പ് ചെയ്യുക…" oninput="ui.checkStartReady()" />
+        </div>
+        <div class="two-col">
+          <div>
+            <label for="mode" class="subtle">മോഡ്</label>
+            <select id="mode" class="select" onchange="ui.checkStartReady()">
+              <option value="letter">അക്ഷരങ്ങൾ</option>
+              <option value="word"> വാക്കുകൾ</option>
+            </select>
+          </div>
+          <div>
+            <label for="duration" class="subtle">സമയം</label>
+            <select id="duration" class="select">
+              <option value="15">15 second</option>
+              <option value="20" selected>20 second</option>
+              <option value="30">30 second</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <button id="goLeaderboard" class="btn" disabled onclick="flows.toLeaderboard()">ആരംഭിക്കാം </button>
+        </div>
+        <div class="row">
+          <button class="btn outline" onclick="flows.toCompetitionSetup()">🏆 TWO PLAYER MATCH</button>
+        </div>
+      </div>
+    </section>
 
-  <!-- Page 2: Leaderboard -->
-  <div id="page2" class="page">
-    <h1>മികച്ച മൂന്ന് സ്കോറുകൾ</h1>
-    <div class="leaderboard" id="leaderboardDisplay"></div>
-    <button onclick="startGame()">ഗെയിം ആരംഭിക്കുക</button>
-    <button class="secondary" onclick="newPlayer()">പുതിയ കളിക്കാരൻ</button>
-  </div>
+    <!-- Page 2: Leaderboard -->
+    <section id="page2" class="page">
+      <h1>ഇതുവരെയുള്ള മികച്ച സ്കോറുകൾ</h1>
+      <div class="card">
+        <div id="leaderboardDisplay" class="stack"></div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" onclick="flows.startSolo()">ഗെയിം ആരംഭിക്കുക</button>
+        <button class="btn secondary" onclick="flows.newPlayer()">BACK TO MENU</button>
+        <button class="btn ghost" onclick="flows.toCompetitionSetup()">🏆 TWO PLAYER MATCH</button>
+      </div>
+    </section>
 
-  <!-- Page 3: Game -->
-  <div id="page3" class="page">
-    <h1>Letter Reading Game</h1>
-    <div class="scoreboard">
-      ബാക്കി സമയം: <span id="timer">25</span> സെക്കൻഡ് |
-      സ്കോർ: <span id="score">0</span>
-    </div>
-    <div id="letter" class="letter red">ബ</div>
-    <div class="controls">
-      <button onclick="startTimer()" id="startBtn">ആരംഭിക്കുക</button>
-      <button onclick="previous()" id="prevBtn" disabled>മുമ്പത്തെത്</button>
-      <button onclick="next()" id="nextBtn" disabled>അടുത്തത്</button>
-    </div>
-  </div>
+    <!-- Page 3: Game -->
+    <section id="page3" class="page">
+      <h1 id="gameTitle">Reading Game</h1>
+      <div class="kpi">
+        <div class="chip">⏱️ <span id="timer">20</span> sec</div>
+        <div class="chip">സ്കോർ: <span id="score">0</span></div>
+        <div class="chip"><span id="modeChip">Letter</span></div>
+      </div>
+      <div id="letter" class="letter red">بَ</div>
+      <div class="controls">
+        <button id="startBtn" class="btn" onclick="engine.startTimer()">ആരംഭിക്കുക</button>
+        <button id="prevBtn" class="btn outline" onclick="engine.previous()" disabled>മുമ്പത്തെത്</button>
+        <button id="nextBtn" class="btn" onclick="engine.next()" disabled>അടുത്തത്</button>
+      </div>
+      <div class="stack" style="margin-top:10px">
+        <button class="btn secondary" onclick="flows.cancelRun()">go to back page</button>
+      </div>
+    </section>
 
-  <!-- Page 4: Results -->
-  <div id="page4" class="page">
-    <h1>ഫലം</h1>
-    <div id="congratsMessage"></div>
-    <div class="your-score" id="yourScore"></div>
-    <div class="leaderboard" id="finalLeaderboard"></div>
-    <button onclick="playAgain()">വീണ്ടും കളിക്കുക</button>
-    <button class="secondary" onclick="newPlayer()">പുതിയ കളിക്കാരൻ</button>
-    <button class="secondary" onclick="resetAllData()">എല്ലാം റീസെറ്റ് ചെയ്യുക</button>
+    <!-- Page 4: Results -->
+    <section id="page4" class="page">
+      <h1>RESULT</h1>
+      <div id="congratsMessage" class="stack"></div>
+      <div class="card">
+        <div class="scorebar">
+          <div>🎯 നിങ്ങളുടെ സ്കോർ: <b><span id="yourScore">0</span></b></div>
+          <div>•</div>
+          <div>⏱️ സമയം: <b><span id="timeUsed">0</span> second</b></div>
+          <div>•</div>
+          <div>MODE: <b><span id="resultMode">അക്ഷരങ്ങൾ </span></b></div>
+        </div>
+      </div>
+      <div class="stack" style="margin-top:10px">
+        <div id="finalLeaderboard" class="stack"></div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" onclick="flows.playAgain()">വീണ്ടും കളിക്കുക</button>
+        <button class="btn secondary" onclick="flows.newPlayer()">MAIN MENU</button>
+        <button class="btn secondary" onclick="admin.resetAllData()">എല്ലാം റീസെറ്റ്</button>
+      </div>
+    </section>
+
+    <!-- Page 5: Competition Setup -->
+    <section id="page5" class="page">
+      <h1>🏆 മത്സര ക്രമീകരണം</h1>
+      <div class="stack">
+        <div class="two-col">
+          <div>
+            <label class="subtle">Player 1</label>
+            <input id="p1" class="input" placeholder="പേര്…" />
+          </div>
+          <div>
+            <label class="subtle">Player 2</label>
+            <input id="p2" class="input" placeholder="പേര്…" />
+          </div>
+        </div>
+        <div class="two-col">
+          <div>
+            <label class="subtle">MODE</label>
+            <select id="compMode" class="select">
+              <option value="letter">Letter</option>
+              <option value="word">Word</option>
+            </select>
+          </div>
+          <div>
+            <label class="subtle">സമയം</label>
+            <select id="compDur" class="select">
+              <option value="15">15 second</option>
+              <option value="20" selected>20 second</option>
+              <option value="30">30 second</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn" onclick="competition.start()">മത്സരം ആരംഭിക്കുക</button>
+        <button class="btn secondary" onclick="flows.newPlayer()">BACK TO MAIN PAGE</button>
+      </div>
+    </section>
+
+    <!-- Page 6: Competition Result -->
+    <section id="page6" class="page">
+      <h1>🏁 മത്സരം — ഫലം</h1>
+      <div id="compCongrats" class="stack"></div>
+      <div class="card">
+        <div id="compSummary" class="stack"></div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" onclick="flows.toCompetitionSetup()">മറ്റൊരു മത്സരം</button>
+        <button class="btn secondary" onclick="flows.toLeaderboard()">ലീഡർബോർഡിലേയ്ക്ക്</button>
+      </div>
+    </section>
+
   </div>
 
   <script>
-    const rawLetters = [
-      "ا", "ب", "ت", "ث", "ج", "ح", "خ", "د", "ذ",
-      "ر", "ز", "س", "ش", "ص", "ض", "ط", "ظ", "ع",
-      "غ", "ف", "ق", "ك", "ل", "م", "ن", "ه", "و", "ي"
-    ];
-    const harakats = ["َ", "ِ", "ُ"];
-    const extra = [
-      "اَبْ", "اَتْ", "اَثْ", "اَجْ", "اَحْ", "اَخْ", "اَدْ", "اَذْ",
-      "اَرْ", "اَزْ", "اَسْ", "اَشْ", "اَصْ", "اَضْ", "اَطْ", "اَظْ",
-      "اَعْ", "اَغْ", "اَفْ", "اَقْ", "اَكْ", "اَلْ", "اَمْ", "اَنْ",
-      "اَهْ", "اَوْ", "اَيْ"
-    ];
+    // ---------- Data Pools ----------
+    const rawLetters = ["ا","ب","ت","ث","ج","ح","خ","د","ذ","ر","ز","س","ش","ص","ض","ط","ظ","ع","غ","ف","ق","ك","ل","م","ن","ه","و","ي"];
+    const harakats = ["َ","ِ","ُ"];
+    const extra = ["اَبْ","اَتْ","اَثْ","اَجْ","اَحْ","اَخْ","اَدْ","اَذْ","اَرْ","اَزْ","اَسْ","اَشْ","اَصْ","اَضْ","اَطْ","اَظْ","اَعْ","اَغْ","اَ","اَقْ","اَكْ","اَلْ","اَمْ","اَنْ","اَهْ","اَوْ","اَيْ"];
+    const lettersPool = (() => {
+      const arr = [...extra];
+      rawLetters.forEach(l => harakats.forEach(h => arr.push(l + h)));
+      return arr;
+    })();
+
+    // Simple wotrds list for word mode 
     
-    const letters = [...extra];
-    rawLetters.forEach(l => {
-      harakats.forEach(h => {
-        letters.push(l + h);
-      });
-    });
+    const verbsPool = [
+  // ✅ Verbs
+  "كَتَبَ","قَرَأَ","جَلَسَ","قَامَ","ذَهَبَ","جَاءَ","سَأَلَ","أَكَلَ","شَرِبَ","فَتَحَ",
+  "أَغْلَقَ","سَمِعَ","رَأَى","دَخَلَ","خَرَجَ","لَعِبَ","تَعَلَّمَ","عَلَّمَ","حَفِظَ","ذَكَرَ",
+  "نَامَ","صَلَّى","ذَبَحَ","بَاعَ","شَرَى","فَهِمَ","قَالَ","وَقَفَ","رَكِبَ","سَافَرَ",
 
-    let currentPlayer = "";
-    let history = [];
-    let index = -1;
-    let score = 0;
-    let timerInterval;
-    let gameActive = false;
+  // ✅ Nouns
+  "كِتَابٌ","قَلَمٌ","مَاءٌ","لَبَنٌ","خُبْزٌ","بَابٌ","بَيْتٌ","كُرْسِيٌّ",
+  "مَدْرَسَةٌ","مُعَلِّمٌ","تِلْمِيذٌ","سَيَّارَةٌ","كُرَةٌ","حِمَارٌ","قِطٌّ",
+  "كَلْبٌ","سَمَكٌ","طَائِرٌ","جَبَلٌ","شَجَرَةٌ"
+];
 
-    // Load scores from localStorage
-    function getScores() {
-      const scores = localStorage.getItem('harakahScores');
-      return scores ? JSON.parse(scores) : [];
-    }
 
-    // Save scores to localStorage
-    function saveScore(name, score) {
-      const scores = getScores();
-      scores.push({ name, score, date: new Date().toISOString() });
-      scores.sort((a, b) => b.score - a.score);
-      localStorage.setItem('harakahScores', JSON.stringify(scores));
-    }
+    // ---------- State ----------
+    const state = {
+      player: "",
+      mode: "letter",
+      duration: 20,
+      history: [],
+      idx: -1,
+      score: 0,
+      timer: null,
+      gameActive: false,
+      startedAt: 0,
+      timeLeft: 0,
 
-    // Show page
-    function showPage(pageNum) {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.getElementById('page' + pageNum).classList.add('active');
-    }
-
-    // Check if name is entered
-    function checkName() {
-      const name = document.getElementById('playerName').value.trim();
-      document.getElementById('nameNextBtn').disabled = name === '';
-    }
-
-    // Go to leaderboard
-    function goToLeaderboard() {
-      currentPlayer = document.getElementById('playerName').value.trim();
-      displayLeaderboard();
-      showPage(2);
-    }
-
-    // Display leaderboard
-    function displayLeaderboard() {
-      const scores = getScores();
-      const container = document.getElementById('leaderboardDisplay');
-      
-      if (scores.length === 0) {
-        container.innerHTML = '<div class="empty-leaderboard">ഇതുവരെ സ്കോറുകളൊന്നുമില്ല. ആദ്യത്തെ കളിക്കാരനാകൂ!</div>';
-        return;
+      // competition
+      comp: {
+        p1:"", p2:"", mode:"letter", duration:20,
+        order:[], currentIndex:0,
+        results:{} // {p1:{score,timeUsed}, p2:{...}}
       }
+    };
 
-      const top3 = scores.slice(0, 3);
-      const ranks = ['🥇', '🥈', '🥉'];
-      const classes = ['first', 'second', 'third'];
-      
-      container.innerHTML = top3.map((s, i) => `
-        <div class="leaderboard-item ${classes[i]}">
-          <div>
-            <span class="rank">${ranks[i]}</span>
-            <span>${s.name}</span>
-          </div>
-          <div>${s.score}</div>
-        </div>
-      `).join('');
-    }
+    // ---------- DOM Utils ----------
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => document.querySelectorAll(sel);
+    const show = id => {
+      $$(".page").forEach(p => p.classList.remove("active"));
+      $(id).classList.add("active");
+    };
 
-    // Start game
-    function startGame() {
-      showPage(3);
-      gameActive = false;
-      document.getElementById("startBtn").style.display = "block";
-      document.getElementById("nextBtn").disabled = true;
-      document.getElementById("prevBtn").disabled = true;
-      document.getElementById("score").textContent = 0;
-      document.getElementById("timer").textContent = 25;
-      
-      history = [];
-      index = -1;
-      score = 0;
-      
-      next();
-    }
-
-    // Start timer when start button is pressed
-    function startTimer() {
-      gameActive = true;
-      document.getElementById("startBtn").style.display = "none";
-      document.getElementById("nextBtn").disabled = false;
-      document.getElementById("prevBtn").disabled = false;
-      
-      clearInterval(timerInterval);
-      let timeLeft = 25;
-      timerInterval = setInterval(() => {
-        timeLeft--;
-        document.getElementById("timer").textContent = timeLeft;
-        if (timeLeft <= 0) {
-          clearInterval(timerInterval);
-          gameActive = false;
-          document.getElementById("nextBtn").disabled = true;
-          document.getElementById("prevBtn").disabled = true;
-          endGame();
+    // ---------- UI Layer ----------
+    const ui = {
+      checkStartReady(){
+        const ok = $("#playerName").value.trim() !== "";
+        $("#goLeaderboard").disabled = !ok;
+      },
+      paintLetter(){
+        const el = $("#letter");
+        const item = state.history[state.idx] || "بَ";
+        el.textContent = item;
+        el.className = "letter " + (state.idx % 2 === 0 ? "red" : "blue");
+      },
+      paintKpis(){
+        $("#score").textContent = state.score;
+        $("#timer").textContent = state.timeLeft;
+        $("#modeChip").textContent = state.mode === "letter" ? "Letter" : "word";
+        $("#gameTitle").textContent = state.mode === "letter" ? "Letter Reading" : "words Reading";
+      },
+      leaderboard(containerId){
+        const scores = storage.getScores();
+        const container = $(containerId);
+        if(!scores.length){
+          container.innerHTML = `<div class="empty">ഇതുവരെ സ്കോറുകളൊന്നുമില്ല. ആദ്യത്തെ കളിക്കാരനാകൂ!</div>`;
+          return;
         }
-      }, 1000);
-    }
-
-    // Update letter display
-    function updateLetter() {
-      const letterDiv = document.getElementById("letter");
-      const letter = history[index];
-      letterDiv.textContent = letter;
-      letterDiv.className = 'letter ' + (index % 2 === 0 ? 'red' : 'blue');
-    }
-
-    // Next letter
-    function next() {
-      if (!gameActive) return;
-      
-      if (index < history.length - 1) {
-        index++;
-      } else {
-        const randomLetter = letters[Math.floor(Math.random() * letters.length)];
-        history.push(randomLetter);
-        index++;
-        score++;
-        document.getElementById("score").textContent = score;
-      }
-      updateLetter();
-      document.getElementById("prevBtn").disabled = (index === 0);
-    }
-
-    // Previous letter
-    function previous() {
-      if (index > 0) {
-        index--;
-        updateLetter();
-        document.getElementById("prevBtn").disabled = (index === 0);
-      }
-    }
-
-    // End game and show results
-    function endGame() {
-      saveScore(currentPlayer, score);
-      const scores = getScores();
-      const playerRank = scores.findIndex(s => s.name === currentPlayer && s.score === score) + 1;
-      
-      // Show congratulations if in top 3
-      const congratsDiv = document.getElementById('congratsMessage');
-      if (playerRank <= 3) {
-        const messages = [
-          '🎉 അഭിനന്ദനങ്ങൾ! ഒന്നാം സ്ഥാനം! 🥇',
-          '🎊 മികച്ചത്! രണ്ടാം സ്ഥാനം! 🥈',
-          '👏 നല്ലത്! മൂന്നാം സ്ഥാനം! 🥉'
-        ];
-        congratsDiv.innerHTML = `<div class="congratulations">${messages[playerRank - 1]}</div>`;
-      } else {
-        congratsDiv.innerHTML = '';
-      }
-      
-      // Show player's score
-      document.getElementById('yourScore').textContent = `നിങ്ങളുടെ സ്കോർ: ${score}`;
-      
-      // Show final leaderboard
-      const top3 = scores.slice(0, 3);
-      const ranks = ['🥇', '🥈', '🥉'];
-      const classes = ['first', 'second', 'third'];
-      
-      document.getElementById('finalLeaderboard').innerHTML = top3.map((s, i) => `
-        <div class="leaderboard-item ${classes[i]}">
-          <div>
-            <span class="rank">${ranks[i]}</span>
-            <span>${s.name}</span>
+        const top3 = scores.slice(0,3);
+        const ranks = ['🥇','🥈','🥉'];
+        const classes = ['first','second','third'];
+        container.innerHTML = top3.map((s,i)=>`
+          <div class="leaderboard-item ${classes[i]}">
+            <div><span class="rank">${ranks[i]}</span> ${s.name}</div>
+            <div>${s.score} • ${s.mode} • ${s.duration}s</div>
           </div>
-          <div>${s.score}</div>
-        </div>
-      `).join('');
-      
-      showPage(4);
-    }
+        `).join("");
+      }
+    };
 
-    // Play again (same player)
-    function playAgain() {
-      displayLeaderboard();
-      showPage(2);
-    }
+    // ---------- Storage & Sync ----------
+    const storage = {
+      key: "harakahScoresV2",
+      getScores(){
+        try{
+          const raw = localStorage.getItem(this.key);
+          return raw ? JSON.parse(raw) : [];
+        }catch(e){ return []; }
+      },
+      saveScore(entry){
+        const all = this.getScores();
+        all.push(entry);
+        all.sort((a,b)=> b.score - a.score || a.timeUsed - b.timeUsed);
+        localStorage.setItem(this.key, JSON.stringify(all));
+        // Optional: fire-and-forget webhook for server sync (configure endpoint below)
+        sync.submitScore(entry);
+      },
+      reset(){
+        localStorage.removeItem(this.key);
+      }
+    };
 
-    // New player
-    function newPlayer() {
-      document.getElementById('playerName').value = '';
-      checkName();
-      showPage(1);
-    }
+    // ----- Secure Sync Hook (client → your server) -----
+    const sync = {
+      endpoint: "", // <<< set to your server endpoint (see notes below)
+      submitScore(entry){
+        if(!this.endpoint) return; // no-op if not configured
+        try{
+          fetch(this.endpoint, {
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body: JSON.stringify({type:"score", payload: entry})
+          }).catch(()=>{});
+        }catch(e){}
+      }
+    };
 
-    // Reset all data
-    function resetAllData() {
-      const password = prompt('റീസെറ്റ് ചെയ്യാൻ പാസ്‌വേഡ് നൽകുക:');
-      console.log('Password entered:', password);
-      if (password === 'shahi321') {
-        if (confirm('എല്ലാ റെക്കോർഡുകളും ഇല്ലാതാക്കണമെന്ന് ഉറപ്പാണോ?')) {
-          try {
-            localStorage.removeItem('harakahScores');
-            console.log('LocalStorage cleared');
-            alert('എല്ലാ റെക്കോർഡുകളും ഇല്ലാതാക്കി!');
-            // Refresh the final leaderboard on page 4
-            document.getElementById('finalLeaderboard').innerHTML = '<div class="empty-leaderboard">ഇതുവരെ സ്കോറുകളൊന്നുമില്ല.</div>';
-          } catch (e) {
-            console.error('Error clearing localStorage:', e);
-            alert('Error: localStorage may not be available in this environment');
+    // ---------- Engine ----------
+    const pools = {
+      nextItem(){
+        const pool = state.mode === "letter" ? lettersPool : verbsPool;
+        return pool[Math.floor(Math.random()*pool.length)];
+      }
+    };
+
+    const engine = {
+      prepareRun({mode, duration}){
+        state.mode = mode;
+        state.duration = duration;
+        state.history = [];
+        state.idx = -1;
+        state.score = 0;
+        state.timeLeft = duration;
+        state.gameActive = false;
+        clearInterval(state.timer);
+        $("#startBtn").style.display = "block";
+        $("#nextBtn").disabled = true;
+        $("#prevBtn").disabled = true;
+        ui.paintKpis();
+        // Seed first item for UX (visible even before start)
+        state.history.push(pools.nextItem());
+        state.idx = 0;
+        ui.paintLetter();
+      },
+      startTimer(){
+        if(state.gameActive) return;
+        state.gameActive = true;
+        $("#startBtn").style.display = "none";
+        $("#nextBtn").disabled = false;
+        $("#prevBtn").disabled = false;
+        state.startedAt = Date.now();
+        clearInterval(state.timer);
+        state.timeLeft = state.duration;
+        ui.paintKpis();
+        state.timer = setInterval(()=>{
+          state.timeLeft--;
+          $("#timer").textContent = state.timeLeft;
+          if(state.timeLeft <= 0){
+            clearInterval(state.timer);
+            state.gameActive = false;
+            $("#nextBtn").disabled = true;
+            $("#prevBtn").disabled = true;
+            flows.endCurrentRun();
           }
+        },1000);
+      },
+      next(){
+        if(!state.gameActive) return;
+        // advancing adds score when we generate a new fresh item
+        const fresh = pools.nextItem();
+        state.history.push(fresh);
+        state.idx = state.history.length-1;
+        state.score++;
+        ui.paintLetter();
+        ui.paintKpis();
+        $("#prevBtn").disabled = (state.idx===0);
+      },
+      previous(){
+        if(state.idx>0){
+          state.idx--;
+          ui.paintLetter();
+          $("#prevBtn").disabled = (state.idx===0);
         }
-      } else if (password !== null) {
-        alert('തെറ്റായ പാസ്‌വേഡ്!');
       }
-    }
+    };
+
+    // ---------- Flows ----------
+    const flows = {
+      toLeaderboard(){
+        state.player = $("#playerName").value.trim();
+        state.mode = $("#mode").value;
+        state.duration = parseInt($("#duration").value,10);
+        ui.leaderboard("#leaderboardDisplay");
+        show("#page2");
+      },
+      startSolo(){
+        engine.prepareRun({mode: state.mode, duration: state.duration});
+        show("#page3");
+      },
+      cancelRun(){
+        clearInterval(state.timer);
+        state.gameActive = false;
+        show("#page2");
+      },
+      endCurrentRun(){
+        // compute time used
+        const timeUsed = state.duration - Math.max(state.timeLeft,0);
+        // persist
+        storage.saveScore({
+          name: state.player || "Player",
+          score: state.score,
+          duration: state.duration,
+          mode: state.mode,
+          timeUsed,
+          date: new Date().toISOString()
+        });
+        // results view
+        $("#yourScore").textContent = state.score;
+        $("#timeUsed").textContent = timeUsed;
+        $("#resultMode").textContent = state.mode === "letter" ? "Letter" : "word";
+        // rank & congrats for top 3
+        const all = storage.getScores();
+        const idx = all.findIndex(s => s.name===state.player && s.score===state.score && s.timeUsed===timeUsed);
+        const congrats = $("#congratsMessage");
+        if(idx > -1 && idx < 3){
+          const msgs = ['🎉 ഒന്നാം സ്ഥാനം! 🥇','🎊 രണ്ടാം സ്ഥാനം! 🥈','👏 മൂന്നാം സ്ഥാനം! 🥉'];
+          congrats.innerHTML = `<div class="congrats">${msgs[idx]}</div>`;
+        }else{
+          congrats.innerHTML = "";
+        }
+        // refresh final leaderboard
+        const top3 = all.slice(0,3);
+        const ranks = ['🥇','🥈','🥉']; const classes = ['first','second','third'];
+        $("#finalLeaderboard").innerHTML = top3.length
+          ? top3.map((s,i)=>`
+            <div class="leaderboard-item ${classes[i]}">
+              <div><span class="rank">${ranks[i]}</span> ${s.name}</div>
+              <div>${s.score} • ${s.mode} • ${s.duration}s</div>
+            </div>`).join("")
+          : `<div class="empty">ഇതുവരെ സ്കോറുകളൊന്നുമില്ല.</div>`;
+        show("#page4");
+      },
+      playAgain(){
+        ui.leaderboard("#leaderboardDisplay");
+        show("#page2");
+      },
+      newPlayer(){
+        $("#playerName").value = "";
+        $("#mode").value = "letter";
+        $("#duration").value = "20";
+        ui.checkStartReady();
+        show("#page1");
+      },
+      toCompetitionSetup(){
+        $("#p1").value = "";
+        $("#p2").value = "";
+        $("#compMode").value = "letter";
+        $("#compDur").value = "20";
+        show("#page5");
+      }
+    };
+
+    // ---------- Competition ----------
+    const competition = {
+      start(){
+        const p1 = $("#p1").value.trim();
+        const p2 = $("#p2").value.trim();
+        const mode = $("#compMode").value;
+        const duration = parseInt($("#compDur").value,10);
+        if(!p1 || !p2){ alert("രണ്ട് പേരുടെ പേരുകളും നൽകുക."); return; }
+        state.comp.p1 = p1; state.comp.p2 = p2; state.comp.mode = mode; state.comp.duration = duration;
+        // randomize who starts
+        state.comp.order = Math.random() < 0.5 ? [p1,p2] : [p2,p1];
+        state.comp.currentIndex = 0;
+        state.comp.results = {};
+        this._announceAndRunNext();
+      },
+      _announceAndRunNext(){
+        const current = state.comp.order[state.comp.currentIndex];
+        state.player = current;
+        engine.prepareRun({mode: state.comp.mode, duration: state.comp.duration});
+        $("#gameTitle").textContent = `മത്സരം — ${current}`;
+        show("#page3");
+      },
+      onRoundEnd(score, timeUsed){
+        const current = state.comp.order[state.comp.currentIndex];
+        state.comp.results[current] = {score, timeUsed};
+        // store into global scores also
+        storage.saveScore({
+          name: current,
+          score,
+          duration: state.comp.duration,
+          mode: state.comp.mode,
+          timeUsed,
+          date: new Date().toISOString()
+        });
+        if(state.comp.currentIndex === 0){
+          // move to next player
+          state.comp.currentIndex = 1;
+          this._announceAndRunNext();
+        }else{
+          // both done → compute winner
+          this._finishCompetition();
+        }
+      },
+      _finishCompetition(){
+        const [A,B] = state.comp.order;
+        const a = state.comp.results[A], b = state.comp.results[B];
+        const winner =
+          (a.score > b.score) ? A :
+          (b.score > a.score) ? B :
+          (a.timeUsed < b.timeUsed) ? A :
+          (b.timeUsed < a.timeUsed) ? B : "tie";
+
+        const congr = $("#compCongrats");
+        if(winner === "tie"){
+          congr.innerHTML = `<div class="congrats">🤝 സമം! ഇരുവരും മികച്ച പ്രകടനം!</div>`;
+        }else{
+          congr.innerHTML = `<div class="congrats">🏆 അഭിനന്ദനങ്ങൾ, <b>${winner}</b>!</div>`;
+        }
+
+        $("#compSummary").innerHTML = `
+          <div class="leaderboard-item">
+            <div><b>${A}</b></div>
+            <div>സ്കോർ: ${a.score} • സമയം: ${a.timeUsed}s</div>
+          </div>
+          <div class="leaderboard-item">
+            <div><b>${B}</b></div>
+            <div>സ്കോർ: ${b.score} • സമയം: ${b.timeUsed}s</div>
+          </div>
+        `;
+        show("#page6");
+      }
+    };
+
+    // Hook competition into solo flow end
+    const originalEnd = flows.endCurrentRun.bind(flows);
+    flows.endCurrentRun = function(){
+      const timeUsed = state.duration - Math.max(state.timeLeft,0);
+      const isCompetition = state.comp.order && state.comp.order.length && state.comp.currentIndex <= 1 && (state.player === state.comp.order[state.comp.currentIndex]);
+      if(isCompetition){
+        // capture current state for competition, then delegate
+        const snapshotScore = state.score;
+        competition.onRoundEnd(snapshotScore, timeUsed);
+      }else{
+        originalEnd();
+      }
+    };
+
+    // ---------- Admin ----------
+    const admin = {
+      resetAllData(){
+        const password = prompt('റീസെറ്റ് ചെയ്യാൻ പാസ്‌വേഡ് നൽകുക:');
+        if(password === 'shahi321'){
+          if(confirm('എല്ലാ റെക്കോർഡുകളും ഇല്ലാതാക്കണമെന്ന് ഉറപ്പാണോ?')){
+            try{ storage.reset(); alert('എല്ലാ റെക്കോർഡുകളും ഇല്ലാതാക്കി!'); }
+            catch(e){ alert('Error: localStorage may not be available'); }
+          }
+        }else if(password !== null){
+          alert('തെറ്റായ പാസ്‌വേഡ്!');
+        }
+      }
+    };
+
+    // ---------- Init ----------
+    (function init(){
+      ui.checkStartReady();
+    })();
   </script>
 </body>
 </html>
